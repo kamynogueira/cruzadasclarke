@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clarke em Cruzadas — OKRs Q3</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --deep:#0a2e28;
+    --mid:#0f5c48;
+    --teal:#1aa37f;
+    --gold:#7ce0c2;
+    --cream:#eefaf5;
+    --river:#4fd1ff;
+    --ink:#062420;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 8%, rgba(79,209,255,0.12), transparent 45%),
+      radial-gradient(circle at 90% 85%, rgba(124,224,194,0.10), transparent 40%),
+      var(--deep);
+    color:var(--cream);
+    font-family:'Fredoka', sans-serif;
+    padding:28px 16px 60px;
+  }
+
+  .wrap{max-width:920px; margin:0 auto;}
+
+  header{ text-align:center; margin-bottom:6px; }
+
+  .eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--river);
+    margin-bottom:10px;
+  }
+
+  h1{
+    font-size:clamp(28px, 7vw, 40px);
+    font-weight:700;
+    margin:0 0 8px;
+    line-height:1.05;
+    color:var(--cream);
+  }
+  h1 span{ color:var(--gold); }
+
+  .sub{
+    font-size:15px;
+    color:#c9e6dd;
+    max-width:440px;
+    margin:0 auto 28px;
+    line-height:1.5;
+  }
+
+  .status{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+  }
+  .pill{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.14);
+    padding:6px 12px;
+    border-radius:999px;
+    color:#dff2ec;
+  }
+  .pill b{ color:var(--gold); }
+
+  .board-scroll{
+    overflow-x:auto;
+    padding-bottom:8px;
+    margin-bottom:28px;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .board{
+    display:grid;
+    gap:2px;
+    background:var(--ink);
+    padding:14px;
+    border-radius:14px;
+    margin:0 auto;
+    width:max-content;
+    box-shadow: 0 18px 40px -18px rgba(0,0,0,0.6);
+    border:1px solid rgba(255,255,255,0.08);
+  }
+
+  .cell{
+    width:30px;
+    height:30px;
+    position:relative;
+  }
+  .cell.blocked{ background:transparent; }
+
+  .cell.active{
+    background:var(--cream);
+    border-radius:3px;
+  }
+
+  .cell.active input{
+    width:100%;
+    height:100%;
+    border:none;
+    background:transparent;
+    text-align:center;
+    text-transform:uppercase;
+    font-family:'Space Mono', monospace;
+    font-weight:700;
+    font-size:14px;
+    color:var(--ink);
+    border-radius:3px;
+    caret-color:var(--teal);
+  }
+  .cell.active input:focus{
+    outline:2px solid var(--teal);
+    outline-offset:-2px;
+    background:#ffffff;
+  }
+  .cell.active.correct input{ background:#bdeedd; color:var(--deep); }
+  .cell.active.incorrect input{ background:#f6c9c2; color:#7a2b1f; }
+  .cell.active.highlight input{ background:#fff3b0; box-shadow:inset 0 0 0 2px var(--teal); }
+  .cell.active.highlight.correct input{ background:#8fe4c4; }
+  .cell.active.highlight.incorrect input{ background:#f2a99c; }
+
+  .board{ overflow:visible; }
+  .cell{ overflow:visible; }
+
+  .num{
+    position:absolute;
+    top:-11px; left:-11px;
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:12px;
+    line-height:1.1;
+    color:#062420;
+    background:#ffe27a;
+    padding:2px 5px;
+    border-radius:6px;
+    border:1.5px solid #062420;
+    box-shadow:0 2px 5px rgba(0,0,0,0.5);
+    pointer-events:none;
+    white-space:nowrap;
+    z-index:5;
+    letter-spacing:0.02em;
+  }
+
+  .actions{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-bottom:32px;
+    flex-wrap:wrap;
+  }
+  button{
+    font-family:'Fredoka', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    border:none;
+    border-radius:10px;
+    padding:11px 20px;
+    cursor:pointer;
+    transition:transform 0.15s ease, filter 0.15s ease;
+  }
+  button:active{ transform:scale(0.97); }
+  .btn-primary{ background:var(--gold); color:var(--ink); }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-ghost{
+    background:transparent;
+    color:var(--cream);
+    border:1px solid rgba(255,255,255,0.25);
+  }
+  .btn-ghost:hover{ background:rgba(255,255,255,0.08); }
+
+  .clues{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:24px;
+  }
+  @media(min-width:520px){
+    .clues{ grid-template-columns:1fr 1fr; }
+  }
+
+  .clue-col h2{
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    color:var(--river);
+    border-bottom:1px solid rgba(255,255,255,0.15);
+    padding-bottom:8px;
+    margin:0 0 12px;
+  }
+  .clue{
+    display:flex;
+    gap:8px;
+    font-size:13.5px;
+    line-height:1.4;
+    color:#dcefe8;
+    margin-bottom:10px;
+    cursor:pointer;
+  }
+  .clue:hover{ color:#fff; }
+  .clue b{
+    color:var(--gold);
+    font-family:'Space Mono', monospace;
+    flex-shrink:0;
+  }
+  .clue.solved{ opacity:0.45; text-decoration:line-through; }
+
+  footer{
+    text-align:center;
+    margin-top:36px;
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    color:#7ab6a6;
+    letter-spacing:0.05em;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">CLARKE ENERGIA · Ciclo Jul–Out 2026</div>
+    <h1>Clarke em <span>cruzadas</span></h1>
+    <p class="sub">Você sabe o que estamos perseguindo neste trimestre? Preencha a rede e revise, na prática, os nossos OKRs.</p>
+  </header>
+
+  <div class="status">
+    <div class="pill"><b id="filled-count">0</b>/<span id="total-count">0</span> células</div>
+    <div class="pill" id="result-pill" style="display:none;"><b>⚡ Rede cheia!</b></div>
+  </div>
+
+  <div class="board-scroll">
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-primary" onclick="checkAnswers()">Verificar respostas</button>
+    <button class="btn-ghost" onclick="clearAll()">Limpar</button>
+  </div>
+
+  <div class="clues">
+    <div class="clue-col">
+      <h2>Horizontais →</h2>
+      <div id="clues-h"></div>
+    </div>
+    <div class="clue-col">
+      <h2>Verticais ↓</h2>
+      <div id="clues-v"></div>
+    </div>
+  </div>
+
+  <footer>OKRs Q3 2026 · 06/07 A 02/10</footer>
+</div>
+
+<script>
+const DATA = {
+  "height": 17, "width": 23,
+  "words": [
+    {"word":"TAKERATE","clue":"Métrica que ganhou processo próprio, liderado pelo Igor Surdo, não é tech (OKR 2)","r":0,"c":6,"dir":"V","num":1},
+    {"word":"HUBSPOT","clue":"CRM que sincroniza dados com o Admin","r":1,"c":2,"dir":"V","num":2},
+    {"word":"PLAYBOOK","clue":"Formato que estamos usando pra documentar as rotinas do gestor de clientes (OKR 2)","r":1,"c":4,"dir":"H","num":3},
+    {"word":"BASTAO","clue":"O que \"passamos\" quando uma venda da (re)energisa vira Sale pra Clarke (OKR 2)","r":2,"c":12,"dir":"H","num":4},
+    {"word":"SINCRONIA","clue":"O que estamos resolvendo entre Hubspot e Admin, via Cron/automação (OKR 1)","r":2,"c":14,"dir":"V","num":5},
+    {"word":"AGENTE","clue":"O que cada pessoa da Clarke deve rodar até o fim do ano","r":2,"c":16,"dir":"V","num":6},
+    {"word":"BANDEIRA","clue":"Tipo de \"tarifária\" que entra nas simulações de custo","r":3,"c":2,"dir":"H","num":7},
+    {"word":"ENTREGA","clue":"Nível mais granular da estrutura de OKR > KR > ___ na planilha","r":4,"c":16,"dir":"H","num":8},
+    {"word":"DEVEC","clue":"Fluxo que revisamos o processo, junto com o Balanço Energético (OKR 2)","r":5,"c":10,"dir":"H","num":9},
+    {"word":"TUSD","clue":"O que revisamos no \"Re-___\" dentro do processo de Monique (OKR 2)","r":6,"c":16,"dir":"H","num":10},
+    {"word":"META","clue":"O que um OKR devia ser, na visão mais \"dura\" trazida numa das falas de liderança","r":7,"c":0,"dir":"H","num":11},
+    {"word":"EXPOSICAO","clue":"Propriedade calculada que criamos pra medir risco de contrato (OKR 1)","r":7,"c":6,"dir":"H","num":12},
+    {"word":"PROJETO","clue":"O que muitos OKRs da Clarke acabam sendo, em vez do item acima","r":7,"c":8,"dir":"V","num":13},
+    {"word":"SUBMERCADO","clue":"Propriedade calculada da Unit criada na Fase 2 do banco de dados (OKR 1)","r":7,"c":10,"dir":"V","num":14},
+    {"word":"CHURN","clue":"Status que indica saída de um cliente","r":7,"c":12,"dir":"V","num":15},
+    {"word":"VOLUME","clue":"Propriedade calculada em MWm que vem do histórico de consumo, Fase 2 (OKR 1)","r":10,"c":16,"dir":"V","num":16},
+    {"word":"GESTORA","clue":"O que a Clarke é hoje, antes de virar hub de soluções","r":12,"c":5,"dir":"H","num":17},
+    {"word":"DAILY","clue":"Ritual do time todo (ter-sexta) de fechamento e abertura de meta do dia (OKR 3)","r":12,"c":13,"dir":"H","num":18},
+    {"word":"ADMIN","clue":"Sistema onde cadastramos Grupo, Empresa e UC","r":12,"c":19,"dir":"V","num":19},
+    {"word":"DEPENDENCIA","clue":"O que trava um gestor quando o OKR que ele precisa está em outro time","r":15,"c":10,"dir":"H","num":20}
+  ]
+};
+
+const board = document.getElementById('board');
+board.style.gridTemplateColumns = `repeat(${DATA.width}, 30px)`;
+board.style.gridTemplateRows = `repeat(${DATA.height}, 30px)`;
+
+// build cell map: key "r,c" -> {letter, num}
+const cellMap = {};
+DATA.words.forEach(w => {
+  for (let i = 0; i < w.word.length; i++) {
+    const r = w.dir === 'V' ? w.r + i : w.r;
+    const c = w.dir === 'H' ? w.c + i : w.c;
+    const key = `${r},${c}`;
+    if (!cellMap[key]) cellMap[key] = { letter: w.word[i] };
+    if (i === 0) {
+      cellMap[key].num = w.num;
+      if (!cellMap[key].dirs) cellMap[key].dirs = [];
+      cellMap[key].dirs.push(w.dir);
+    }
+  }
+});
+
+let totalCells = Object.keys(cellMap).length;
+document.getElementById('total-count').textContent = totalCells;
+
+for (let r = 0; r < DATA.height; r++) {
+  for (let c = 0; c < DATA.width; c++) {
+    const key = `${r},${c}`;
+    const div = document.createElement('div');
+    if (cellMap[key]) {
+      div.className = 'cell active';
+      div.dataset.key = key;
+      div.dataset.letter = cellMap[key].letter;
+      if (cellMap[key].num) {
+        const num = document.createElement('span');
+        num.className = 'num';
+        const arrows = (cellMap[key].dirs || []).map(d => d === 'H' ? '→' : '↓').join('');
+        num.textContent = cellMap[key].num + arrows;
+        div.appendChild(num);
+      }
+      const input = document.createElement('input');
+      input.maxLength = 1;
+      input.dataset.key = key;
+      input.addEventListener('input', (e) => {
+        e.target.value = e.target.value.toUpperCase().replace(/[^A-ZÀ-Ú]/g, '');
+        updateProgress();
+        if (e.target.value) {
+          const next = findNext(r, c);
+          if (next) next.focus();
+        }
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value) {
+          const prev = findPrev(r, c);
+          if (prev) prev.focus();
+        }
+      });
+      input.addEventListener('focus', () => {
+        highlightCell(r, c);
+      });
+      input.addEventListener('click', () => {
+        highlightCell(r, c);
+      });
+      div.appendChild(input);
+    } else {
+      div.className = 'cell blocked';
+    }
+    board.appendChild(div);
+  }
+}
+
+let activeDir = 'H';
+
+function findNext(r, c) {
+  if (activeDir === 'V') {
+    for (let rr = r + 1; rr < DATA.height; rr++) {
+      const el = board.querySelector(`input[data-key="${rr},${c}"]`);
+      if (el) return el;
+    }
+    return null;
+  }
+  for (let cc = c + 1; cc < DATA.width; cc++) {
+    const el = board.querySelector(`input[data-key="${r},${cc}"]`);
+    if (el) return el;
+  }
+  return null;
+}
+function findPrev(r, c) {
+  if (activeDir === 'V') {
+    for (let rr = r - 1; rr >= 0; rr--) {
+      const el = board.querySelector(`input[data-key="${rr},${c}"]`);
+      if (el) return el;
+    }
+    return null;
+  }
+  for (let cc = c - 1; cc >= 0; cc--) {
+    const el = board.querySelector(`input[data-key="${r},${cc}"]`);
+    if (el) return el;
+  }
+  return null;
+}
+
+function updateProgress() {
+  const inputs = board.querySelectorAll('input');
+  let filled = 0;
+  inputs.forEach(i => { if (i.value) filled++; });
+  document.getElementById('filled-count').textContent = filled;
+}
+
+function checkAnswers() {
+  let allCorrect = true;
+  board.querySelectorAll('.cell.active').forEach(cell => {
+    const input = cell.querySelector('input');
+    const correct = cell.dataset.letter;
+    cell.classList.remove('correct', 'incorrect');
+    if (!input.value) { allCorrect = false; return; }
+    if (input.value === correct) {
+      cell.classList.add('correct');
+    } else {
+      cell.classList.add('incorrect');
+      allCorrect = false;
+    }
+  });
+  document.getElementById('result-pill').style.display = allCorrect ? 'inline-flex' : 'none';
+  markClues();
+}
+
+function markClues() {
+  DATA.words.forEach(w => {
+    let word = '';
+    for (let i = 0; i < w.word.length; i++) {
+      const r = w.dir === 'V' ? w.r + i : w.r;
+      const c = w.dir === 'H' ? w.c + i : w.c;
+      const input = board.querySelector(`input[data-key="${r},${c}"]`);
+      word += (input.value || '_');
+    }
+    const clueEl = document.querySelector(`.clue[data-id="${w.dir}-${w.num}"]`);
+    if (clueEl) clueEl.classList.toggle('solved', word === w.word);
+  });
+}
+
+function revealAll() {
+  board.querySelectorAll('.cell.active').forEach(cell => {
+    const input = cell.querySelector('input');
+    input.value = cell.dataset.letter;
+  });
+  updateProgress();
+  checkAnswers();
+}
+
+function clearAll() {
+  board.querySelectorAll('input').forEach(i => { i.value = ''; });
+  board.querySelectorAll('.cell').forEach(c => c.classList.remove('correct', 'incorrect', 'highlight'));
+  document.getElementById('result-pill').style.display = 'none';
+  updateProgress();
+  document.querySelectorAll('.clue').forEach(c => c.classList.remove('solved'));
+}
+
+function clearHighlight() {
+  board.querySelectorAll('.cell.highlight').forEach(c => c.classList.remove('highlight'));
+}
+
+function highlightWord(w) {
+  clearHighlight();
+  activeDir = w.dir;
+  for (let i = 0; i < w.word.length; i++) {
+    const r = w.dir === 'V' ? w.r + i : w.r;
+    const c = w.dir === 'H' ? w.c + i : w.c;
+    const cell = board.querySelector(`.cell[data-key="${r},${c}"]`);
+    if (cell) cell.classList.add('highlight');
+  }
+}
+
+let lastClickedKey = null;
+
+function highlightCell(r, c) {
+  const key = `${r},${c}`;
+  const matches = DATA.words.filter(w => {
+    for (let i = 0; i < w.word.length; i++) {
+      const rr = w.dir === 'V' ? w.r + i : w.r;
+      const cc = w.dir === 'H' ? w.c + i : w.c;
+      if (`${rr},${cc}` === key) return true;
+    }
+    return false;
+  });
+  if (!matches.length) return;
+  if (matches.length > 1 && key === lastClickedKey) {
+    // clicking the same crossing cell again toggles to the other direction
+    const other = matches.find(w => w.dir !== activeDir);
+    highlightWord(other || matches[0]);
+  } else {
+    // prefer keeping current direction if this cell belongs to it, else default to first match
+    const sameDir = matches.find(w => w.dir === activeDir);
+    highlightWord(sameDir || matches[0]);
+  }
+  lastClickedKey = key;
+}
+
+function focusWord(w) {
+  const r = w.r, c = w.c;
+  const input = board.querySelector(`input[data-key="${r},${c}"]`);
+  if (input) input.focus();
+  highlightWord(w);
+}
+
+const cluesH = document.getElementById('clues-h');
+const cluesV = document.getElementById('clues-v');
+DATA.words
+  .filter(w => w.dir === 'H')
+  .sort((a,b) => a.num - b.num)
+  .forEach(w => {
+    const div = document.createElement('div');
+    div.className = 'clue';
+    div.dataset.id = `H-${w.num}`;
+    div.innerHTML = `<b>${w.num}.</b><span>${w.clue} (${w.word.length})</span>`;
+    div.onclick = () => focusWord(w);
+    cluesH.appendChild(div);
+  });
+DATA.words
+  .filter(w => w.dir === 'V')
+  .sort((a,b) => a.num - b.num)
+  .forEach(w => {
+    const div = document.createElement('div');
+    div.className = 'clue';
+    div.dataset.id = `V-${w.num}`;
+    div.innerHTML = `<b>${w.num}.</b><span>${w.clue} (${w.word.length})</span>`;
+    div.onclick = () => focusWord(w);
+    cluesV.appendChild(div);
+  });
+</script>
+</body>
+</html>
